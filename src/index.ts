@@ -1,3 +1,5 @@
+// https://developers.google.com/android-publisher/api-ref/rest/v3/edits.tracks
+
 import { ReadStream, createReadStream } from "fs";
 
 import { google } from "googleapis";
@@ -7,7 +9,7 @@ type ThenArg<T> = T extends PromiseLike<infer U> ? U : T;
 const getClient = (keyFile: string) =>
   google.auth.getClient({
     keyFile,
-    scopes: "https://www.googleapis.com/auth/androidpublisher"
+    scopes: "https://www.googleapis.com/auth/androidpublisher",
   });
 
 const getAndroidPublisher = (
@@ -18,8 +20,8 @@ const getAndroidPublisher = (
     version: "v3",
     auth: client,
     params: {
-      packageName
-    }
+      packageName,
+    },
   });
 
 const startEdit = (
@@ -29,8 +31,8 @@ const startEdit = (
   androidPublisher.edits.insert({
     requestBody: {
       id,
-      expiryTimeSeconds: "600"
-    }
+      expiryTimeSeconds: "600",
+    },
   });
 
 const upload = (
@@ -44,8 +46,8 @@ const upload = (
     packageName,
     media: {
       mimeType: "application/octet-stream",
-      body: aab
-    }
+      body: aab,
+    },
   });
 
 const setTrack = (
@@ -53,7 +55,8 @@ const setTrack = (
   editId: string,
   packageName: string,
   track: string,
-  versionCode: string
+  versionCode: string,
+  releaseNote: string
 ) =>
   androidPublisher.edits.tracks.update({
     editId,
@@ -64,10 +67,16 @@ const setTrack = (
       releases: [
         {
           status: "completed",
-          versionCodes: [versionCode]
-        }
-      ]
-    }
+          versionCodes: [versionCode],
+          releaseNotes: [
+            {
+              language: "en-US",
+              text: releaseNote,
+            },
+          ],
+        },
+      ],
+    },
   });
 
 const commit = (
@@ -77,7 +86,7 @@ const commit = (
 ) =>
   androidPublisher.edits.commit({
     editId,
-    packageName
+    packageName,
   });
 
 const getAABStream = (filePath: string) => createReadStream(filePath);
@@ -88,13 +97,15 @@ interface SchemaPublish {
   packageName: string;
   aabFile: string;
   track: string;
+  releaseNote: string;
 }
 
 export const publish = async ({
   keyFile,
   packageName,
   aabFile,
-  track
+  track,
+  releaseNote,
 }: SchemaPublish) => {
   const client = await getClient(keyFile);
   const stream = getAABStream(aabFile);
@@ -114,8 +125,8 @@ export const publish = async ({
     editId,
     packageName,
     track,
-    String(bundle.data.versionCode)
+    String(bundle.data.versionCode),
+    releaseNote
   );
   await commit(androidPublisher, editId, packageName);
 };
-

@@ -2,7 +2,7 @@
 
 import { join } from "path";
 import program from "commander";
-import { publish } from './index';
+import { publish } from "./index";
 
 program
   .description("Publish Android App Bundle to Google Play")
@@ -13,6 +13,10 @@ program
     "-t, --track <track>",
     "set track (production, beta, alpha...)"
   )
+  .requiredOption(
+    "-r, --releaseNote <note>",
+    "set release note (only for en-US)"
+  )
   .option("-e, --exit", "exit on error with error code 1.")
   .parse(process.argv);
 
@@ -20,12 +24,13 @@ publish({
   keyFile: join(process.cwd(), program.keyFile),
   packageName: program.packageName,
   aabFile: join(process.cwd(), program.aabFile),
-  track: program.track
+  track: program.track,
+  releaseNote: program.releaseNote,
 })
-.then(() => {
-  console.log('Publish complete.');
-})
-.catch((error: Error) => {
-  console.error(error.message);
-  process.exit(program.exit ? 1 : 0);
-})
+  .then(() => {
+    console.log("Publish complete.");
+  })
+  .catch((error: Error) => {
+    console.error(error.message);
+    process.exit(program.exit ? 1 : 0);
+  });
